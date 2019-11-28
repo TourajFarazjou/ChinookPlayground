@@ -7,17 +7,24 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ChinookPlayground.Data.DataContext;
+using ChinookPlayground.Data.Repositories;
+using ChinookPlayground.Domain.IRepositories;
+using ChinookPlayground.Domain.Services;
 
 namespace ChinookPlayground.WebMvc
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
+
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -34,6 +41,22 @@ namespace ChinookPlayground.WebMvc
             services.AddMvc(options => options.EnableEndpointRouting = false);
             services.AddMemoryCache();
             services.AddSession();
+
+
+            // DbContext
+            //services.AddDbContext<ChinookDbContext>(options => options.UseSqlite(Configuration.GetConnectionString("ChinookConnection")));
+            //
+            services.AddDbContext<ChinookDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("ChinookConnection")));
+            //services.ConfigureSqlServerContext<ChinookDbContext>(_configuration, "ChinookConnection");
+
+            // Repositories
+            //services.AddSingleton<IGenericRepository<Artist>, GenericRepository<Artist>>();
+            //services.AddSingleton<IGenericRepository<Album>, GenericRepository<Album>>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            // Services
+            services.AddTransient<IAlbumService, AlbumService>();
+            services.AddTransient<IArtistService, ArtistService>();
 
         }
 
